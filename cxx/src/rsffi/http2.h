@@ -1,5 +1,6 @@
 #pragma once
 #include<cstdint>
+#include <cstddef>
 #include"core.h"
 
 #ifdef __cplusplus

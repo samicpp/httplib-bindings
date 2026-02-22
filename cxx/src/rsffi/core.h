@@ -1,5 +1,7 @@
 #pragma once
 #include<cstdint>
+#include <cstddef>
+
 
 #ifdef __cplusplus
 extern "C"{
@@ -10,16 +12,18 @@ bool has_init();
 
 typedef void* FfiFuture;
 typedef void* FfiServer;
+typedef void* FfiStream;
+typedef void* SockAddre;
 
 typedef void* FfiSocket;
 typedef void* FfiReques;
 
-typedef void* FfiStream;
-typedef void* SockAddre;
-
 typedef void* WebSocket;
-
 typedef void* H2Session;
+
+typedef void* TlsSerCon;
+typedef void* TlsSniBui;
+
 
 typedef struct {
     bool owned;

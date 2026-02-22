@@ -1,6 +1,7 @@
 #pragma once
-#include<cstdint>
 #include"core.h"
+#include<cstdint>
+#include <cstddef>
 
 #ifdef __cplusplus
 extern "C"{

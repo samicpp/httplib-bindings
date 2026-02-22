@@ -44,6 +44,8 @@ FfiStream: TypeAlias = c_void_p
 SockAddre: TypeAlias = c_void_p
 WebSocket: TypeAlias = c_void_p
 H2Session: TypeAlias = c_void_p
+TlsSerCon: TypeAlias = c_void_p
+TlsSniBui: TypeAlias = c_void_p
 
 
 # structs
@@ -86,8 +88,51 @@ class FfiBundle(Structure):
     ]
     pass
 
+class HttpClient(Structure):
+    _fields_ = [
+        ("_owned", c_bool),
+        ("valid", c_bool),
+        ("headComplete", c_bool),
+        ("bodyComplete", c_bool),
+        ("path", FfiSlice),
+        ("method", c_ubyte),
+        ("version", c_ubyte),
+        ("methodStr", FfiSlice),
+        ("headersLen", c_size_t),
+        ("_headersCap", c_size_t),
+        ("headers", HeaderPair),
+        ("body", FfiSlice),
+        ("host", FfiSlice),
+        ("scheme", FfiSlice),
+    ]
+    def __del__(self):
+        if self.owned:
+            httplib.http_free_fficlient(self)
+        return
+    pass
+
+class HttpResponse(Structure):
+    _fields_ = [
+        ("_owned", c_bool),
+        ("valid", c_bool),
+        ("headComplete", c_bool),
+        ("bodyComplete", c_bool),
+        ("code", c_uint16),
+        ("status", FfiSlice),
+        ("headersLen", c_size_t),
+        ("_headersCap", c_size_t),
+        ("headers", HeaderPair),
+        ("body", FfiSlice),
+    ]
+    def __del__(self):
+        if self.owned:
+            httplib.http_req_free_ffires(self)
+        return
+    pass
 
 # functions
+
+## core
 
 def_func("ffi_future_new", FfiFuture, [CFUNCTYPE(None, c_void_p, c_void_p, use_errno=False, use_last_error=False), c_void_p])
 def_func("ffi_future_state", c_uint8, [FfiFuture])
@@ -102,3 +147,48 @@ def_func("ffi_future_get_errmsg", POINTER(FfiSlice), [FfiFuture])
 
 def_func("free_slice", None, [FfiSlice])
 def_func("add_i64", c_longlong, [c_longlong, c_longlong])
+
+## base
+
+def_func("tcp_server_new", None, [FfiFuture, c_char_p])
+def_func("tcp_server_accept", None, [FfiFuture, FfiServer])
+
+def_func("addr_is_ipv4", c_bool, [SockAddre])
+def_func("addr_is_ipv6", c_bool, [SockAddre])
+def_func("get_addr_str", FfiSlice, [SockAddre])
+
+def_func("tcp_detect_prot", None, [FfiFuture, FfiStream])
+def_func("http1_new", FfiSocket, [FfiStream, c_size_t])
+
+def_func("http_get_type", c_ubyte, [FfiSocket])
+
+def_func("http_read_client", None, [FfiFuture, FfiSocket])
+def_func("http_read_until_complete", None, [FfiFuture, FfiSocket])
+def_func("http_read_until_head_complete", None, [FfiFuture, FfiSocket])
+
+def_func("http_set_header", None, [FfiSocket, HeaderPair])
+def_func("http_add_header", None, [FfiSocket, HeaderPair])
+def_func("http_del_header", None, [FfiSocket, FfiSlice])
+
+def_func("http_write", None, [FfiFuture, FfiSocket, FfiSlice])
+def_func("http_close", None, [FfiFuture, FfiSocket, FfiSlice])
+def_func("http_flush", None, [FfiFuture, FfiSocket])
+
+def_func("http_get_fficlient", HttpClient, [FfiSocket])
+def_func("http_free_fficlient", None, [HttpClient])
+
+def_func("http_get_method", c_ubyte, [FfiSocket])
+def_func("http_get_method_str", FfiSlice, [FfiSocket])
+def_func("http_get_method_path", FfiSlice, [FfiSocket])
+def_func("http_get_version", c_ubyte, [FfiSocket])
+
+def_func("http_client_has_header", c_bool, [FfiSocket, FfiSlice])
+def_func("http_client_has_header_count", c_size_t, [FfiSocket, FfiSlice])
+def_func("http_client_get_first_header", FfiSlice, [FfiSocket, FfiSlice])
+def_func("http_client_get_header", FfiSlice, [FfiSocket, FfiSlice, c_size_t])
+
+def_func("http_client_get_body", FfiSlice, [FfiSocket, FfiSlice, c_size_t])
+
+def_func("http1_websocket", None, [FfiFuture, FfiSocket])
+def_func("http1_h2c", None, [FfiFuture, FfiSocket])
+def_func("http1_h2_prior_knowledge", None, [FfiFuture, FfiSocket])

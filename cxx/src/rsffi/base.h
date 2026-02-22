@@ -1,6 +1,7 @@
 #pragma once
 #include<cstdint>
 #include"core.h"
+#include <cstddef>
 
 #ifdef __cplusplus
 extern "C"{
@@ -51,7 +52,7 @@ void http_read_until_head_complete(FfiFuture fut, FfiSocket http); // nothing
 
 void http_set_header(FfiSocket http, HeaderPair pair);
 void http_add_header(FfiSocket http, HeaderPair pair);
-void http_del_header(FfiSocket http, HeaderPair pair);
+void http_del_header(FfiSocket http, FfiSlice name);
 
 void http_write(FfiFuture fut, FfiSocket http, FfiSlice bytes); // resolves in nothing
 void http_close(FfiFuture fut, FfiSocket http, FfiSlice bytes); // nothing
