@@ -1,0 +1,3 @@
+cmake -S cxx -B build
+cmake --build build
+cargo test
