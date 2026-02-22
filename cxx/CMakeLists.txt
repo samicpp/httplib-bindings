@@ -6,22 +6,23 @@ set(CMAKE_CXX_STANDARD 20)
 
 
 file(GLOB_RECURSE SOURCES "src/*.c" "src/*.cpp" "src/*.cc" "src/*.h" "src/*.hpp")
-add_library(httpcpp ${SOURCES})
+# add_library(httpcpp ${SOURCES})
+add_executable(httpcpp ${SOURCES})
 
 include(CTest)
 
-# set(HTTPRS_PATH "${CMAKE_SOURCE_DIR}/../target/debug")
+set(HTTPRS_PATH "${CMAKE_SOURCE_DIR}/../httplib/target/debug")
 
-# if(WIN32) 
-#     set(HTTPRS_LIB "httprs.lib")
-# # elseif(APPLE) 
-# #    set(HTTPRS_LIB "libhttprs.dylib")
-# elseif(UNIX) 
-#     set(HTTPRS_LIB "libhttprs.so")
-# endif()
+if(WIN32) 
+    set(HTTPRS_LIB "httplib.lib")
+# elseif(APPLE) 
+#    set(HTTPRS_LIB "libhttprs.dylib")
+elseif(UNIX) 
+    set(HTTPRS_LIB "libhttplib.so")
+endif()
 
-# # add_library(httprs STATIC IMPORTED)
-# # set_target_properties(httprs PROPERTIES
-# #     IMPORTED_LOCATION "${HTTPRS_PATH}/${HTTPRS_LIB}"
-# # )
-# target_link_libraries(httpcpp PRIVATE "${HTTPRS_PATH}/${HTTPRS_LIB}")
+# add_library(httprs STATIC IMPORTED)
+# set_target_properties(httprs PROPERTIES
+#     IMPORTED_LOCATION "${HTTPRS_PATH}/${HTTPRS_LIB}"
+# )
+target_link_libraries(httpcpp PRIVATE "${HTTPRS_PATH}/${HTTPRS_LIB}")

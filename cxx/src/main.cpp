@@ -4,6 +4,7 @@
 #include "rsffi/base.h"
 #include "wrapper.hpp"
 #include <coroutine>
+#include<thread>
 
 
 int add(int x, int y){
@@ -29,8 +30,8 @@ int server_test(){
     printf("hello???\n");
     char addr[] = "0.0.0.0:2048";
 
-    printf("starting tokio rt\n");
-    if (!has_init() && !init_rt()) return 1;
+    // printf("starting tokio rt\n");
+    // if (!has_init() && !init_rt()) return 1;
 
     FfiServer server;
     {
@@ -117,4 +118,15 @@ int server_test(){
     // std::cin.get();
 
     return 0;
+}
+
+int main(){
+    printf("starting tokio rt\n");
+    if (!has_init() && !init_rt()) return 1;
+
+    // std::thread thread(server_test);
+    // thread.detach();
+    // thread.join();
+
+    return server_test();
 }
