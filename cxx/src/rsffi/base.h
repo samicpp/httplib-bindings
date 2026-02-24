@@ -103,8 +103,8 @@ typedef struct {
 
 void tcp_connect(FfiFuture fut, char* addr); // resolves in FfiStream
 
-void tcp_tls_connect(FfiFuture fut, char* addr, char* domain, size_t len, FfiSlice* alpns);            // resolves in FfiStream
-void tcp_tls_connect_unverified(FfiFuture fut, char* addr, char* domain, size_t len, FfiSlice* alpns); // resolves in FfiStream
+void tcp_tls_connect(FfiFuture fut, char* addr, char* domain, char* alpns);            // resolves in FfiStream
+void tcp_tls_connect_unverified(FfiFuture fut, char* addr, char* domain, char* alpns); // resolves in FfiStream
 
 FfiReques http1_request_new(FfiStream stream, size_t bufsize);
 
@@ -122,28 +122,28 @@ void http_req_write(FfiFuture fut, FfiReques req, FfiSlice bytes);    // resolve
 void http_req_send(FfiFuture fut, FfiReques req, FfiSlice bytes);     // nothing
 void http_req_flush(FfiFuture fut, FfiReques req);                    // nothing
 
-void http_req_read_client(FfiFuture fut, FfiReques req);              // nothing
+void http_req_read(FfiFuture fut, FfiReques req);             // nothing
 void http_req_read_until_complete(FfiFuture fut, FfiReques req);      // nothing
 void http_req_read_until_head_complete(FfiFuture fut, FfiReques req); // nothing
 
 uint16_t http_response_get_status_code(FfiReques req);
 FfiSlice http_response_get_status_msg(FfiReques req);
 
-bool http_req_response_has_header(FfiReques req, FfiSlice name);
-size_t http_req_response_has_header_count(FfiReques req, FfiSlice name);
-FfiSlice http_req_response_get_first_header(FfiReques req, FfiSlice name);
-FfiSlice http_req_response_get_header(FfiReques req, FfiSlice name, size_t index);
+bool http_response_has_header(FfiReques req, FfiSlice name);
+size_t http_response_has_header_count(FfiReques req, FfiSlice name);
+FfiSlice http_response_get_first_header(FfiReques req, FfiSlice name);
+FfiSlice http_response_get_header(FfiReques req, FfiSlice name, size_t index);
 
-FfiSlice http_req_response_get_body(FfiReques req);
+FfiSlice http_response_get_body(FfiReques req);
 
 HttpResponse* http_req_get_ffires(FfiReques req);
 void http_req_free_ffires(HttpResponse* res);
 
 void http_req_free(FfiReques req);
 
-void http1_websocket_strict(FfiFuture fut, FfiSocket http);          // resolves in WebSocket
-void http1_websocket_lazy(FfiFuture fut, FfiSocket http);            // resolves in WebSocket
-void http1_h2c_full(FfiFuture fut, FfiSocket http);                  // resolves in Http2Session
+void http1_websocket_strict(FfiFuture fut, FfiReques http);          // resolves in WebSocket
+void http1_websocket_lazy(FfiFuture fut, FfiReques http);            // resolves in WebSocket
+void http1_h2c_full(FfiFuture fut, FfiReques http);                  // resolves in Http2Session
 
 
 #ifdef __cplusplus

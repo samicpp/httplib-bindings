@@ -150,6 +150,8 @@ def_func("add_i64", c_longlong, [c_longlong, c_longlong])
 
 ## base
 
+### server
+
 def_func("tcp_server_new", None, [FfiFuture, c_char_p])
 def_func("tcp_server_accept", None, [FfiFuture, FfiServer])
 
@@ -174,8 +176,8 @@ def_func("http_write", None, [FfiFuture, FfiSocket, FfiSlice])
 def_func("http_close", None, [FfiFuture, FfiSocket, FfiSlice])
 def_func("http_flush", None, [FfiFuture, FfiSocket])
 
-def_func("http_get_fficlient", HttpClient, [FfiSocket])
-def_func("http_free_fficlient", None, [HttpClient])
+def_func("http_get_fficlient", POINTER(HttpClient), [FfiSocket])
+def_func("http_free_fficlient", None, [POINTER(HttpClient)])
 
 def_func("http_get_method", c_ubyte, [FfiSocket])
 def_func("http_get_method_str", FfiSlice, [FfiSocket])
@@ -189,6 +191,53 @@ def_func("http_client_get_header", FfiSlice, [FfiSocket, FfiSlice, c_size_t])
 
 def_func("http_client_get_body", FfiSlice, [FfiSocket, FfiSlice, c_size_t])
 
+def_func("http_free", None, [FfiSocket])
+
 def_func("http1_websocket", None, [FfiFuture, FfiSocket])
 def_func("http1_h2c", None, [FfiFuture, FfiSocket])
 def_func("http1_h2_prior_knowledge", None, [FfiFuture, FfiSocket])
+
+### client
+
+def_func("tcp_connect", None, [FfiFuture, c_char_p])
+def_func("tcp_tls_connect", None, [FfiFuture, c_char_p, c_char_p, c_char_p])
+def_func("tcp_tls_connect_unverified", None, [FfiFuture, c_char_p, c_char_p, c_char_p])
+
+def_func("http1_request_new", FfiReques, [FfiStream, c_size_t])
+
+def_func("http_req_get_type", c_ubyte, [FfiReques])
+
+def_func("http_req_set_header", None, [FfiReques, HeaderPair])
+def_func("http_req_add_header", None, [FfiReques, HeaderPair])
+def_func("http_req_del_header", None, [FfiReques, FfiSlice])
+
+def_func("http_req_set_method_str", None, [FfiReques, FfiSlice])
+def_func("http_req_set_method_byte", None, [FfiReques, c_ubyte])
+def_func("http_req_set_path", None, [FfiReques, FfiSlice])
+
+def_func("http_req_write", None, [FfiFuture, FfiReques, FfiSlice])
+def_func("http_req_close", None, [FfiFuture, FfiReques, FfiSlice])
+def_func("http_req_flush", None, [FfiFuture, FfiReques])
+
+def_func("http_req_read", None, [FfiFuture, FfiReques])
+def_func("http_req_read_until_complete", None, [FfiFuture, FfiReques])
+def_func("http_req_read_until_head_complete", None, [FfiFuture, FfiReques])
+
+def_func("http_response_get_status_code", c_uint16, [FfiReques])
+def_func("http_response_get_status_msg", FfiSlice, [FfiReques])
+
+def_func("http_response_has_header", c_bool, [FfiReques, FfiSlice])
+def_func("http_response_has_header_count", c_size_t, [FfiReques, FfiSlice])
+def_func("http_response_get_first_header", FfiSlice, [FfiReques, FfiSlice])
+def_func("http_response_get_header", FfiSlice, [FfiReques, FfiSlice, c_size_t])
+
+def_func("http_response_get_body", FfiSlice, [FfiReques, FfiSlice, c_size_t])
+
+def_func("http_req_get_ffires", POINTER(HttpResponse), [FfiReques])
+def_func("http_req_free_ffires", None, [POINTER(HttpResponse)])
+
+def_func("http_req_free", None, [FfiReques])
+
+def_func("http1_websocket_strict", None, [FfiFuture, FfiReques])
+def_func("http1_websocket_lazy", None, [FfiFuture, FfiReques])
+def_func("http1_h2c_full", None, [FfiFuture, FfiReques])
