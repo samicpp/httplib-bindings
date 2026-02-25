@@ -33,9 +33,11 @@ typedef struct {
 
 // server
 
-void tcp_server_new(FfiFuture fut, char* addr_cstr); // resolves in FfiServer
+void tcp_server_new(FfiFuture fut, char* addr_cstr);     // resolves in FfiServer
+FfiServer tcp_server_from_fd(int fd);
 void tcp_server_accept(FfiFuture fut, FfiServer server); // resolves in FfiBundle
 // void server_loop(FfiFuture fut, FfiServer server, void (*cb)(FfiBundle));
+void tcp_server_free(FfiFuture fut, FfiServer server); // detect wether tls, http2 preface, or rest
 
 bool addr_is_ipv4(SockAddre bundle);
 bool addr_is_ipv6(SockAddre bundle);
