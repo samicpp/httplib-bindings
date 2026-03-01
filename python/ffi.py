@@ -14,7 +14,7 @@ else:
     raise RuntimeError(f"Unsupported platform: {sys.platform}")
 
 
-httplib = CDLL(f"./httplib/target/debug/{name}")
+httplib = CDLL(f"../httplib/target/release/{name}")
 
 httplib.init_rt.argtypes = []
 httplib.init_rt.restype = c_bool
@@ -51,6 +51,7 @@ TlsSniBui: TypeAlias = c_void_p
 # structs
 
 class FfiSlice(Structure):
+    shouldFree: bool = False
     _fields_ = [
         ("owned", c_bool),
         ("length", c_size_t),
@@ -58,9 +59,17 @@ class FfiSlice(Structure):
         ("ptr", POINTER(c_ubyte)),
     ]
 
-    def __del__(self):
-        if self.owned:
+    def __init__(self, *args: Any, **kw: Any) -> None:
+        self.shouldFree = True
+        super().__init__(*args, **kw)
+        pass
+
+    def free(self):
+        # print(f"free called, should free = {self.shouldFree}")
+
+        if self.shouldFree and self.owned:
             httplib.free_slice(self)
+            self.shouldFree = False
         return
 
     def toBytes(self) -> bytes:
@@ -72,6 +81,11 @@ class FfiSlice(Structure):
         ptr = ctypes.cast(buf, POINTER(c_ubyte))
         return FfiSlice(owned = False, length = len(byt), _capacity = len(byt), ptr = ptr)
 
+
+    def __enter__(self): return self
+    def __del__(self): self.free()
+    def __exit__(self): self.free()
+
     pass
 
 class HeaderPair(Structure):
@@ -79,6 +93,13 @@ class HeaderPair(Structure):
         ("name", FfiSlice),
         ("value", FfiSlice),
     ]
+
+    @staticmethod
+    def fromString(name: str, value: str) -> HeaderPair:
+        nam = FfiSlice.fromBytes(name.encode())
+        val = FfiSlice.fromBytes(value.encode())
+        return HeaderPair(name = nam, value = val)
+
     pass
 
 class FfiBundle(Structure):
@@ -106,8 +127,7 @@ class HttpClient(Structure):
         ("scheme", FfiSlice),
     ]
     def __del__(self):
-        if self.owned:
-            httplib.http_free_fficlient(self)
+        httplib.http_free_fficlient(self)
         return
     pass
 
@@ -125,8 +145,7 @@ class HttpResponse(Structure):
         ("body", FfiSlice),
     ]
     def __del__(self):
-        if self.owned:
-            httplib.http_req_free_ffires(self)
+        httplib.http_req_free_ffires(self)
         return
     pass
 
@@ -147,6 +166,7 @@ def_func("ffi_future_get_errmsg", POINTER(FfiSlice), [FfiFuture])
 
 def_func("free_slice", None, [FfiSlice])
 def_func("add_i64", c_longlong, [c_longlong, c_longlong])
+def_func("panic_test", None, [c_char_p]) # dont use this
 
 ## base
 
@@ -179,10 +199,10 @@ def_func("http_flush", None, [FfiFuture, FfiSocket])
 def_func("http_get_fficlient", POINTER(HttpClient), [FfiSocket])
 def_func("http_free_fficlient", None, [POINTER(HttpClient)])
 
-def_func("http_get_method", c_ubyte, [FfiSocket])
-def_func("http_get_method_str", FfiSlice, [FfiSocket])
-def_func("http_get_method_path", FfiSlice, [FfiSocket])
-def_func("http_get_version", c_ubyte, [FfiSocket])
+def_func("http_client_get_method", c_ubyte, [FfiSocket])
+def_func("http_client_get_method_str", FfiSlice, [FfiSocket])
+def_func("http_client_get_path", FfiSlice, [FfiSocket])
+def_func("http_client_get_version", c_ubyte, [FfiSocket])
 
 def_func("http_client_has_header", c_bool, [FfiSocket, FfiSlice])
 def_func("http_client_has_header_count", c_size_t, [FfiSocket, FfiSlice])
@@ -216,7 +236,7 @@ def_func("http_req_set_method_byte", None, [FfiReques, c_ubyte])
 def_func("http_req_set_path", None, [FfiReques, FfiSlice])
 
 def_func("http_req_write", None, [FfiFuture, FfiReques, FfiSlice])
-def_func("http_req_close", None, [FfiFuture, FfiReques, FfiSlice])
+def_func("http_req_send", None, [FfiFuture, FfiReques, FfiSlice])
 def_func("http_req_flush", None, [FfiFuture, FfiReques])
 
 def_func("http_req_read", None, [FfiFuture, FfiReques])
