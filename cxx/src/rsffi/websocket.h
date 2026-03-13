@@ -18,7 +18,7 @@ typedef struct {
 
 void websocket_read_frame(FfiFuture fut, WebSocket ws); // resolves in WsFrame*
 void websocket_free_frame(WsFrame* frame);
-void websocket_flush(FfiFuture fut);                    // resolves in nothing
+void websocket_flush(FfiFuture fut, WebSocket ws);      // resolves in nothing
 void websocket_free(WebSocket ws);
 
 

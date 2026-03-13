@@ -38,7 +38,7 @@ void http2_send_settings_default(FfiFuture fut, Http2Sess session);
 void http2_send_settings_default_no_push(FfiFuture fut, Http2Sess session);
 void http2_send_settings_maximum(FfiFuture fut, Http2Sess session);
 
-void http2_send_push_promise(FfiFuture fut, Http2Sess session, int associate_id, int promise_id, bool end, HeaderPair* headers, size_t length);
+void http2_send_push_promise(FfiFuture fut, Http2Sess session, int associate_id, int promise_id, HeaderPair* headers, size_t length);
 
 void http2_send_ping(FfiFuture fut, Http2Sess session, bool ack, FfiSlice buf);
 

@@ -85,6 +85,8 @@ void http1_h2_prior_knowledge(FfiFuture fut, FfiSocket http); // resolves in Htt
 
 
 
+// client
+
 
 typedef struct {
     bool owned;

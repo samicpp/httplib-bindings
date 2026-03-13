@@ -3,13 +3,14 @@ from typing import * # type: ignore
 from typing_extensions import * # type: ignore
 import ctypes, sys, os
 
+libname = "httplib"
 
 if sys.platform == "linux":
-    name = "libhttplib.so"
+    name = f"lib{libname}.so"
 elif sys.platform == "darwin":
-    name = "libhttplib.dylib"
+    name = f"lib{libname}.dylib"
 elif sys.platform == "win32":
-    name = "httplib.dll"
+    name = f"{libname}.dll"
 else:
     raise RuntimeError(f"Unsupported platform: {sys.platform}")
 
@@ -149,6 +150,23 @@ class HttpResponse(Structure):
         return
     pass
 
+class DuoStream(Structure):
+    _fields_ = [
+        ("one", FfiStream),
+        ("two", FfiStream),
+    ]
+    pass
+
+class WsFrame(Structure):
+    _fields_ = [
+        ("fin", c_bool),
+        ("rsv", c_ubyte),
+        ("opcode", c_ubyte),
+        ("masked", c_bool),
+        ("payload", FfiSlice),
+    ]
+    pass
+
 # functions
 
 ## core
@@ -167,6 +185,17 @@ def_func("ffi_future_get_errmsg", POINTER(FfiSlice), [FfiFuture])
 def_func("free_slice", None, [FfiSlice])
 def_func("add_i64", c_longlong, [c_longlong, c_longlong])
 def_func("panic_test", None, [c_char_p]) # dont use this
+
+
+## utils
+
+def_func("tls_get_alpn", FfiSlice, [FfiStream])
+def_func("tcp_peek", None, [FfiFuture, FfiStream, FfiSlice])
+def_func("stream_read", None, [FfiFuture, FfiStream, FfiSlice])
+def_func("stream_write", None, [FfiFuture, FfiStream, FfiSlice])
+def_func("stream_write_all", None, [FfiFuture, FfiStream, FfiSlice])
+def_func("stream_free", None, [FfiStream])
+
 
 ## base
 
@@ -217,6 +246,7 @@ def_func("http1_websocket", None, [FfiFuture, FfiSocket])
 def_func("http1_h2c", None, [FfiFuture, FfiSocket])
 def_func("http1_h2_prior_knowledge", None, [FfiFuture, FfiSocket])
 
+
 ### client
 
 def_func("tcp_connect", None, [FfiFuture, c_char_p])
@@ -261,3 +291,83 @@ def_func("http_req_free", None, [FfiReques])
 def_func("http1_websocket_strict", None, [FfiFuture, FfiReques])
 def_func("http1_websocket_lazy", None, [FfiFuture, FfiReques])
 def_func("http1_h2c_full", None, [FfiFuture, FfiReques])
+
+
+## http2
+
+def_func("http2_new", H2Session, [FfiStream, c_size_t])
+def_func("http2_new_client", H2Session, [FfiStream, c_size_t])
+def_func("http2_new_server", H2Session, [FfiStream, c_size_t])
+def_func("http2_with", H2Session, [FfiStream, c_size_t, c_ubyte, c_bool, FfiSlice])
+def_func("http2_free", None, [H2Session])
+
+def_func("http2_read_preface", None, [FfiFuture, H2Session])
+def_func("http2_send_preface", None, [FfiFuture, H2Session])
+def_func("http2_next", None, [FfiFuture, H2Session])
+def_func("http2_read_raw", None, [FfiFuture, H2Session])
+def_func("http2_handle_raw", None, [FfiFuture, H2Session, FfiSlice])
+def_func("http2_open_stream", c_int, [H2Session])
+
+def_func("http2_send_data", None, [FfiFuture, H2Session, c_int, c_bool, FfiSlice])
+def_func("http2_send_headers", None, [FfiFuture, H2Session, c_int, c_bool, POINTER(HeaderPair), c_size_t])
+
+def_func("http2_send_priority", None, [FfiFuture, H2Session, c_int, c_int, c_ubyte])
+
+def_func("http2_send_rst_stream", None, [FfiFuture, H2Session, c_int, c_int])
+
+def_func("http2_send_settings", None, [FfiFuture, H2Session, FfiSlice])
+def_func("http2_send_settings_default", None, [FfiFuture, H2Session])
+def_func("http2_send_settings_default_no_push", None, [FfiFuture, H2Session])
+def_func("http2_send_settings_maximum", None, [FfiFuture, H2Session])
+
+def_func("http2_send_push_promise", None, [FfiFuture, H2Session, c_int, c_int, POINTER(HeaderPair), c_size_t])
+
+def_func("http2_send_ping", None, [FfiFuture, H2Session, c_bool, FfiSlice])
+
+def_func("http2_send_goaway", None, [FfiFuture, H2Session, c_int, c_int, FfiSlice])
+
+def_func("http2_client_handler", FfiReques, [H2Session, c_int])
+def_func("http2_server_handler", FfiReques, [H2Session, c_int])
+
+
+## tls-server
+
+def_func("tls_config_single_cert_pem", TlsSerCon, [FfiSlice, FfiSlice, c_char_p])
+def_func("tls_config_sni_builder", TlsSniBui, [])
+def_func("tls_config_sni_builder_with_pem", TlsSniBui, [FfiSlice, FfiSlice])
+def_func("tls_config_sni_add_pem", c_bool, [TlsSniBui, c_char_p, FfiSlice, FfiSlice])
+def_func("tls_config_sni_builder_build", TlsSerCon, [TlsSniBui, c_char_p])
+def_func("tls_config_free", None, [TlsSerCon])
+def_func("tcp_upgrade_tls", None, [FfiFuture, FfiStream, TlsSerCon])
+
+
+## websocket
+
+def_func("websocket_read_frame", None, [FfiFuture, WebSocket])
+def_func("websocket_free_frame", None, [WsFrame])
+def_func("websocket_flush", None, [FfiFuture, WebSocket])
+def_func("websocket_free", None, [WebSocket])
+
+
+def_func("websocket_send_continuation", None, [FfiFuture, WebSocket, FfiSlice])
+def_func("websocket_send_continuation_masked", None, [FfiFuture, WebSocket, FfiSlice])
+def_func("websocket_send_continuation_frag", None, [FfiFuture, WebSocket, FfiSlice])
+def_func("websocket_send_continuation_masked_frag", None, [FfiFuture, WebSocket, FfiSlice])
+
+def_func("websocket_send_text", None, [FfiFuture, WebSocket, FfiSlice])
+def_func("websocket_send_text_masked", None, [FfiFuture, WebSocket, FfiSlice])
+def_func("websocket_send_text_frag", None, [FfiFuture, WebSocket, FfiSlice])
+def_func("websocket_send_text_masked_frag", None, [FfiFuture, WebSocket, FfiSlice])
+
+def_func("websocket_send_binary", None, [FfiFuture, WebSocket, FfiSlice])
+def_func("websocket_send_binary_masked", None, [FfiFuture, WebSocket, FfiSlice])
+def_func("websocket_send_binary_frag", None, [FfiFuture, WebSocket, FfiSlice])
+def_func("websocket_send_binary_masked_frag", None, [FfiFuture, WebSocket, FfiSlice])
+
+def_func("websocket_send_close", None, [FfiFuture, WebSocket, c_uint16, FfiSlice])
+def_func("websocket_send_close_masked", None, [FfiFuture, WebSocket, c_uint16, FfiSlice])
+
+def_func("websocket_send_ping", None, [FfiFuture, WebSocket, FfiSlice])
+def_func("websocket_send_ping_masked", None, [FfiFuture, WebSocket, FfiSlice])
+def_func("websocket_send_pong", None, [FfiFuture, WebSocket, FfiSlice])
+def_func("websocket_send_pong_masked", None, [FfiFuture, WebSocket, FfiSlice])
