@@ -2,6 +2,8 @@ import asyncio
 from future import Future
 from ffi import httplib, FfiBundle, HeaderPair, FfiSlice
 from ctypes import cast, POINTER
+from socket_wrapper import Socket
+from server_wrap import TcpServer
 
 
 async def serveTest(addr: str, create: bool = False):
@@ -42,6 +44,28 @@ async def serveTest(addr: str, create: bool = False):
     httplib.http_free(http)
     pass
 
+async def wrapperTest(addr: str):
+    print("1. listening")
+    server = await TcpServer.listen(addr)
+
+    print("2. accepting connection")
+    stream = await server.accept()
+
+    print("3. constructing socket")
+    http = httplib.http1_new(stream.ptr, 8 * 1024)
+    sock = Socket(http)
+
+    print("4. reading")
+    await sock.readUntilComplete()
+
+    print("5. setting headers")
+    sock.setHeader("Content-Type", "text/plain")
+    sock.setHeader("Connection", "close")
+
+    print("6. closing")
+    await sock.close(b"Hello, but from python")
+
+    pass
 
 routine = serveTest("0.0.0.0:2001", False)
 asyncio.run(routine)

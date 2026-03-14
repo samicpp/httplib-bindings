@@ -3,7 +3,7 @@ from typing import * # type: ignore
 from typing_extensions import * # type: ignore
 import ctypes, sys, os
 
-libname = "httplib"
+libname = "http"
 
 if sys.platform == "linux":
     name = f"lib{libname}.so"
@@ -100,6 +100,13 @@ class HeaderPair(Structure):
         nam = FfiSlice.fromBytes(name.encode())
         val = FfiSlice.fromBytes(value.encode())
         return HeaderPair(name = nam, value = val)
+    
+    @staticmethod
+    def fromBytes(name: bytes, value: bytes) -> HeaderPair:
+        nam = FfiSlice.fromBytes(name)
+        val = FfiSlice.fromBytes(value)
+        return HeaderPair(name = nam, value = val)
+    
 
     pass
 
@@ -128,7 +135,7 @@ class HttpClient(Structure):
         ("scheme", FfiSlice),
     ]
     def __del__(self):
-        httplib.http_free_fficlient(self)
+        # httplib.http_free_fficlient(self)
         return
     pass
 
@@ -146,7 +153,7 @@ class HttpResponse(Structure):
         ("body", FfiSlice),
     ]
     def __del__(self):
-        httplib.http_req_free_ffires(self)
+        # httplib.http_req_free_ffires(self)
         return
     pass
 
@@ -191,9 +198,12 @@ def_func("panic_test", None, [c_char_p]) # dont use this
 
 def_func("tls_get_alpn", FfiSlice, [FfiStream])
 def_func("tcp_peek", None, [FfiFuture, FfiStream, FfiSlice])
+def_func("stream_get_type", c_ubyte, [FfiStream])
 def_func("stream_read", None, [FfiFuture, FfiStream, FfiSlice])
+def_func("stream_read_exact", None, [FfiFuture, FfiStream, FfiSlice])
 def_func("stream_write", None, [FfiFuture, FfiStream, FfiSlice])
 def_func("stream_write_all", None, [FfiFuture, FfiStream, FfiSlice])
+def_func("stream_shutdown", None, [FfiFuture, FfiStream])
 def_func("stream_free", None, [FfiStream])
 
 
