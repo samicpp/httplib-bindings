@@ -3,7 +3,7 @@ from typing import * # type: ignore
 from typing_extensions import * # type: ignore
 import ctypes, sys, os
 
-libname = "http"
+libname = "photon"
 
 if sys.platform == "linux":
     name = f"lib{libname}.so"

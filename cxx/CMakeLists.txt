@@ -14,11 +14,11 @@ include(CTest)
 set(HTTPRS_PATH "${CMAKE_SOURCE_DIR}/../httplib/target/debug")
 
 if(WIN32) 
-    set(HTTPRS_LIB "httplib.lib")
+    set(HTTPRS_LIB "photon.lib")
 # elseif(APPLE) 
 #    set(HTTPRS_LIB "libhttprs.dylib")
 elseif(UNIX) 
-    set(HTTPRS_LIB "libhttplib.so")
+    set(HTTPRS_LIB "libphoton.so")
 endif()
 
 # add_library(httprs STATIC IMPORTED)
