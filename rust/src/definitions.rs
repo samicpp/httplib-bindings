@@ -56,7 +56,7 @@ impl FfiSlice{
             ptr,
         }
     }
-    pub fn from_str(str_slice: &str) -> Self{
+    pub const fn from_str(str_slice: &str) -> Self{
         let ptr = str_slice.as_ptr();
         let len = str_slice.len();
 
@@ -67,7 +67,7 @@ impl FfiSlice{
             cap: len,
         }
     }
-    pub fn from_buf(slice: &[u8]) -> Self{
+    pub const fn from_buf(slice: &[u8]) -> Self{
         let ptr = slice.as_ptr();
         let len = slice.len();
 
@@ -111,22 +111,22 @@ impl FfiSlice{
             Self::from_vec(self.as_bytes().to_vec())
         }
     }
-    pub fn as_bytes(&self) -> &[u8]{
+    pub const fn as_bytes(&self) -> &[u8]{
         unsafe { slice::from_raw_parts(self.ptr, self.len) }
     }
-    pub fn as_bytes_mut(&self) -> &mut [u8]{
+    pub const fn as_bytes_mut(&self) -> &mut [u8]{
         unsafe { slice::from_raw_parts_mut(self.ptr as *mut u8, self.len) }
     }
-    pub fn as_str(&self) -> Result<&str, core::str::Utf8Error> {
+    pub const fn as_str(&self) -> Result<&str, core::str::Utf8Error> {
         str::from_utf8(self.as_bytes())
     }
     pub fn as_str_lossy(&self) -> std::borrow::Cow<'_, str>{
         String::from_utf8_lossy(self.as_bytes())
     }
-    pub unsafe fn as_bytes_static(&self) -> &'static [u8]{
+    pub const unsafe fn as_bytes_static(&self) -> &'static [u8]{
         unsafe { slice::from_raw_parts(self.ptr, self.len) }
     }
-    pub unsafe fn as_bytes_mut_static(&self) -> &'static mut [u8]{
+    pub const unsafe fn as_bytes_mut_static(&self) -> &'static mut [u8]{
         unsafe { slice::from_raw_parts_mut(self.ptr as *mut u8, self.len) }
     }
 }
@@ -197,6 +197,24 @@ impl<I: AsRef<[u8]>> AsFfiSlice for I {
 pub struct FfiHeaderPair{
     pub nam: FfiSlice,
     pub val: FfiSlice,
+}
+impl FfiHeaderPair{
+    pub const fn new(name: &str, value: &str) -> Self {
+        Self { nam: FfiSlice::from_str(name), val: FfiSlice::from_str(value) }
+    }
+    pub fn new_owned(name: String, value: String) -> Self {
+        Self { nam: FfiSlice::from_string(name), val: FfiSlice::from_string(value) }
+    }
+}
+impl From<(&str, &str)> for FfiHeaderPair {
+    fn from(value: (&str, &str)) -> Self {
+        FfiHeaderPair::new(value.0, value.1)
+    }
+}
+impl From<(String, String)> for FfiHeaderPair {
+    fn from(value: (String, String)) -> Self {
+        FfiHeaderPair::new_owned(value.0, value.1)
+    }
 }
 
 #[repr(C)]
