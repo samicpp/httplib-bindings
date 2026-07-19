@@ -188,6 +188,8 @@ def_func("ffi_future_free", None, [FfiFuture])
 def_func("ffi_future_await", None, [FfiFuture])
 def_func("ffi_future_get_errno", c_int, [FfiFuture])
 def_func("ffi_future_get_errmsg", POINTER(FfiSlice), [FfiFuture])
+def_func("ffi_future_get_userdata", c_void_p, [FfiFuture])
+def_func("ffi_future_set_userdata", None, [FfiFuture, c_void_p])
 
 def_func("free_slice", None, [FfiSlice])
 def_func("add_i64", c_longlong, [c_longlong, c_longlong])
@@ -196,6 +198,11 @@ def_func("panic_test", None, [c_char_p]) # dont use this
 
 ## utils
 
+def_func("create_duplex", DuoStream, [])
+def_func("tcp_from_fd", FfiStream, [c_int32])
+def_func("unix_from_fd", FfiStream, [c_int32])
+def_func("tcp_to_fd", c_int32, [FfiStream])
+def_func("unix_to_fd", c_int32, [FfiStream])
 def_func("tls_get_alpn", FfiSlice, [FfiStream])
 def_func("tcp_peek", None, [FfiFuture, FfiStream, FfiSlice])
 def_func("stream_get_type", c_ubyte, [FfiStream])
