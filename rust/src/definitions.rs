@@ -1,5 +1,7 @@
+use core::slice;
 use std::ffi::{c_char, c_void};
 use std::marker::PhantomData;
+use std::ptr;
 use std::sync::{Arc, Mutex};
 use std::task::{Poll, Waker};
 
@@ -15,11 +17,180 @@ use std::task::{Poll, Waker};
 #[repr(C)]
 #[derive(Debug)]
 pub struct FfiSlice{
-    pub owned: bool,
+    pub owned: u16,
     pub len: usize,
     pub cap: usize,
     pub ptr: *const u8,
 }
+
+impl FfiSlice{
+    #[inline]
+    pub const fn ro_mem(&self) -> bool { self.owned == 0 }
+    pub const fn host_owns(&self) -> bool { self.owned == 1 }
+    pub const fn is_owned(&self) -> bool { self.owned == 2 }
+
+    pub fn from_string(string: String) -> Self{
+        let bytes = string.into_bytes();
+        let ptr = bytes.as_ptr();
+        let len = bytes.len();
+        let cap = bytes.capacity();
+        std::mem::forget(bytes);
+
+        Self {
+            owned: 2,
+            len,
+            cap,
+            ptr,
+        }
+    }
+    pub fn from_vec(vec: Vec<u8>) -> Self{
+        let ptr = vec.as_ptr();
+        let len = vec.len();
+        let cap = vec.capacity();
+        std::mem::forget(vec);
+
+        Self {
+            owned: 2,
+            len,
+            cap,
+            ptr,
+        }
+    }
+    pub fn from_str(str_slice: &str) -> Self{
+        let ptr = str_slice.as_ptr();
+        let len = str_slice.len();
+
+        Self {
+            owned: 0,
+            len,
+            ptr,
+            cap: len,
+        }
+    }
+    pub fn from_buf(slice: &[u8]) -> Self{
+        let ptr = slice.as_ptr();
+        let len = slice.len();
+
+        Self {
+            owned: 0,
+            len,
+            ptr,
+            cap: len,
+        }
+    }
+
+    pub const fn empty() -> Self{
+        Self { len: 0, cap: 0, ptr: ptr::null(), owned: 0 }
+    }
+
+    pub fn free(self) {
+        if self.is_owned() && self.ptr != ptr::null(){
+            drop(self.to_vec());
+        } 
+        else if self.host_owns() && self.ptr != ptr::null() {
+            unsafe { free_slice(self); }
+        }
+    }
+    pub fn to_string(self) -> Option<String>{
+        if !self.is_owned() {
+            None
+        }
+        else {
+            unsafe { Some(String::from_raw_parts(self.ptr as *mut u8, self.len, self.cap)) }
+        }
+    }
+    pub fn to_vec(self) -> Option<Vec<u8>>{
+        if !self.is_owned() { None }
+        else{
+            unsafe { Some(Vec::from_raw_parts(self.ptr as *mut u8, self.len, self.cap)) }
+        }
+    }
+    pub fn to_owned(self) -> Self {
+        if self.is_owned() { self }
+        else {
+            Self::from_vec(self.as_bytes().to_vec())
+        }
+    }
+    pub fn as_bytes(&self) -> &[u8]{
+        unsafe { slice::from_raw_parts(self.ptr, self.len) }
+    }
+    pub fn as_bytes_mut(&self) -> &mut [u8]{
+        unsafe { slice::from_raw_parts_mut(self.ptr as *mut u8, self.len) }
+    }
+    pub fn as_str(&self) -> Result<&str, core::str::Utf8Error> {
+        str::from_utf8(self.as_bytes())
+    }
+    pub fn as_str_lossy(&self) -> std::borrow::Cow<'_, str>{
+        String::from_utf8_lossy(self.as_bytes())
+    }
+    pub unsafe fn as_bytes_static(&self) -> &'static [u8]{
+        unsafe { slice::from_raw_parts(self.ptr, self.len) }
+    }
+    pub unsafe fn as_bytes_mut_static(&self) -> &'static mut [u8]{
+        unsafe { slice::from_raw_parts_mut(self.ptr as *mut u8, self.len) }
+    }
+}
+
+unsafe impl Sync for FfiSlice{}
+unsafe impl Send for FfiSlice{}
+
+impl From<String> for FfiSlice{
+    fn from(value: String) -> Self {
+        Self::from_string(value)
+    }
+}
+impl From<Vec<u8>> for FfiSlice{
+    fn from(value: Vec<u8>) -> Self {
+        Self::from_vec(value)
+    }
+}
+impl From<&str> for FfiSlice{
+    fn from(value: &str) -> Self {
+        Self::from_str(value)
+    }
+}
+impl From<&[u8]> for FfiSlice{
+    fn from(value: &[u8]) -> Self {
+        Self::from_buf(value)
+    }
+}
+impl From<&String> for FfiSlice{
+    fn from(value: &String) -> Self {
+        Self::from_str(value)
+    }
+}
+impl From<&Vec<u8>> for FfiSlice{
+    fn from(value: &Vec<u8>) -> Self {
+        Self::from_buf(value)
+    }
+}
+impl Drop for FfiSlice{
+    fn drop(&mut self) {
+        unsafe {
+            if self.is_owned() {
+                drop(Vec::from_raw_parts(self.ptr as *mut u8, self.len, self.cap));
+            }
+        }
+    }
+}
+
+pub trait ToFfiSlice {
+    fn to_ffi_slice(self) -> FfiSlice;
+}
+pub trait AsFfiSlice {
+    fn as_ffi_slice(&self) -> FfiSlice;
+}
+impl<I: Into<FfiSlice>> ToFfiSlice for I {
+    fn to_ffi_slice(self) -> FfiSlice {
+        self.into()
+    }
+}
+impl<I: AsRef<[u8]>> AsFfiSlice for I {
+    fn as_ffi_slice(&self) -> FfiSlice {
+        self.as_ref().into()
+    }
+}
+
 
 #[repr(C)]
 #[derive(Debug)]

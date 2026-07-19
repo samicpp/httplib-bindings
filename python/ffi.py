@@ -54,7 +54,7 @@ TlsSniBui: TypeAlias = c_void_p
 class FfiSlice(Structure):
     shouldFree: bool = False
     _fields_ = [
-        ("owned", c_bool),
+        ("owned", c_uint16),
         ("length", c_size_t),
         ("_capacity", c_size_t),
         ("ptr", POINTER(c_ubyte)),
@@ -80,7 +80,7 @@ class FfiSlice(Structure):
     def fromBytes(byt: bytes) -> FfiSlice:
         buf = (c_ubyte * len(byt))(*byt)
         ptr = ctypes.cast(buf, POINTER(c_ubyte))
-        return FfiSlice(owned = False, length = len(byt), _capacity = len(byt), ptr = ptr)
+        return FfiSlice(owned = 2, length = len(byt), _capacity = len(byt), ptr = ptr)
 
 
     def __enter__(self): return self

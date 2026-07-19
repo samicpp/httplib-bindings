@@ -4,7 +4,7 @@
 
 static FfiSlice sliceFromCstr(const char* s) {
     FfiSlice slice;
-    slice.owned = false;
+    slice.owned = 2;
     slice.len = strlen(s);
     slice.cap = slice.len;
     slice.ptr = (uint8_t*)s;

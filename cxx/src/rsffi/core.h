@@ -26,7 +26,7 @@ typedef void* TlsSniBui;
 
 
 typedef struct {
-    bool owned;
+    uint16_t owned;
     size_t len;
     size_t cap;
     uint8_t* ptr;
