@@ -318,9 +318,9 @@ pub enum Versions{
 
 
 unsafe extern "C" {
-    pub unsafe fn tcp_connect(fut: *mut FfiFuture<DynStream>, addr: *mut i8);
-    pub unsafe fn tcp_tls_connect(fut: *mut FfiFuture<DynStream>, addr: *mut i8, domain: *mut i8, alpns: *mut i8);
-    pub unsafe fn tcp_tls_connect_unverified(fut: *mut FfiFuture<DynStream>, addr: *mut i8, domain: *mut i8, alpns: *mut i8);
+    pub unsafe fn tcp_connect(fut: *const FfiFuture<DynStream>, addr: *mut i8);
+    pub unsafe fn tcp_tls_connect(fut: *const FfiFuture<DynStream>, addr: *mut i8, domain: *mut i8, alpns: *mut i8);
+    pub unsafe fn tcp_tls_connect_unverified(fut: *const FfiFuture<DynStream>, addr: *mut i8, domain: *mut i8, alpns: *mut i8);
 
     pub unsafe fn http1_request_new(stream: *mut DynStream, bufsize: usize) -> *mut DynHttpRequest;
     pub unsafe fn http_req_get_type(http: *mut DynHttpRequest) -> u8;
@@ -330,12 +330,12 @@ unsafe extern "C" {
     pub unsafe fn http_req_set_method_str(req: *mut DynHttpRequest, method: FfiSlice);
     pub unsafe fn http_req_set_method_byte(req: *mut DynHttpRequest, method: u8);
     pub unsafe fn http_req_set_path(req: *mut DynHttpRequest, path: FfiSlice);
-    pub unsafe fn http_req_write(fut: *mut FfiFuture<c_void>, req: *mut DynHttpRequest, buf: FfiSlice);
-    pub unsafe fn http_req_send(fut: *mut FfiFuture<c_void>, req: *mut DynHttpRequest, buf: FfiSlice);
-    pub unsafe fn http_req_flush(fut: *mut FfiFuture<c_void>, req: *mut DynHttpRequest);
-    pub unsafe fn http_req_read(fut: *mut FfiFuture<c_void>, req: *mut DynHttpRequest);
-    pub unsafe fn http_req_read_until_complete(fut: *mut FfiFuture<c_void>, req: *mut DynHttpRequest);
-    pub unsafe fn http_req_read_until_head_complete(fut: *mut FfiFuture<c_void>, req: *mut DynHttpRequest);
+    pub unsafe fn http_req_write(fut: *const FfiFuture<c_void>, req: *mut DynHttpRequest, buf: FfiSlice);
+    pub unsafe fn http_req_send(fut: *const FfiFuture<c_void>, req: *mut DynHttpRequest, buf: FfiSlice);
+    pub unsafe fn http_req_flush(fut: *const FfiFuture<c_void>, req: *mut DynHttpRequest);
+    pub unsafe fn http_req_read(fut: *const FfiFuture<c_void>, req: *mut DynHttpRequest);
+    pub unsafe fn http_req_read_until_complete(fut: *const FfiFuture<c_void>, req: *mut DynHttpRequest);
+    pub unsafe fn http_req_read_until_head_complete(fut: *const FfiFuture<c_void>, req: *mut DynHttpRequest);
     pub unsafe fn http_req_free(req: *mut DynHttpRequest);
 
     pub unsafe fn http_response_get_status_code(req: *mut DynHttpRequest) -> u16;
@@ -348,9 +348,9 @@ unsafe extern "C" {
     pub unsafe fn http_req_get_ffires(req: *mut DynHttpRequest) -> *const FfiResponse;
     pub unsafe fn http_req_free_ffires(res: *const FfiResponse);
 
-    pub unsafe fn http1_websocket_strict(fut: *mut FfiFuture<DynWebSocket>, http: *mut DynHttpRequest);
-    pub unsafe fn http1_websocket_lazy(fut: *mut FfiFuture<DynWebSocket>, http: *mut DynHttpRequest);
-    pub unsafe fn http1_h2c_full(fut: *mut FfiFuture<DynH2Sess>, http: *mut DynHttpRequest);
+    pub unsafe fn http1_websocket_strict(fut: *const FfiFuture<DynWebSocket>, http: *mut DynHttpRequest);
+    pub unsafe fn http1_websocket_lazy(fut: *const FfiFuture<DynWebSocket>, http: *mut DynHttpRequest);
+    pub unsafe fn http1_h2c_full(fut: *const FfiFuture<DynH2Sess>, http: *mut DynHttpRequest);
 
     pub unsafe fn http2_new(stream: *mut DynStream, bufsize: usize) -> *const DynH2Sess;
     pub unsafe fn http2_new_client(stream: *mut DynStream, bufsize: usize) -> *const DynH2Sess;
@@ -380,27 +380,27 @@ unsafe extern "C" {
     pub unsafe fn http2_client_handler(session: *const DynH2Sess, stream_id: u32) -> *mut DynHttpRequest;
     pub unsafe fn http2_server_handler(session: *const DynH2Sess, stream_id: u32) -> *mut DynHttpSocket;
 
-    pub unsafe fn tcp_server_new(fut: *mut FfiFuture<TcpListener>, string: *mut c_char);
+    pub unsafe fn tcp_server_new(fut: *const FfiFuture<TcpListener>, string: *mut c_char);
     pub unsafe fn tcp_server_from_fd(fd: i32) -> *mut TcpListener;
     pub unsafe fn tcp_server_free(listener: *mut TcpListener);
-    pub unsafe fn tcp_server_accept(fut: *mut FfiFuture<FfiBundle>, server: *mut TcpListener);
+    pub unsafe fn tcp_server_accept(fut: *const FfiFuture<FfiBundle>, server: *mut TcpListener);
 
     pub unsafe fn addr_is_ipv4(addr: *const SocketAddr) -> bool;
     pub unsafe fn addr_is_ipv6(addr: *const SocketAddr) -> bool;
     pub unsafe fn get_addr_str(addr: *const SocketAddr) -> FfiSlice;
-    pub unsafe fn tcp_detect_prot(fut: *mut FfiFuture<u8>, stream: *mut DynStream);
+    pub unsafe fn tcp_detect_prot(fut: *const FfiFuture<u8>, stream: *mut DynStream);
 
     pub unsafe fn http1_new(ffi: *mut DynStream, bufsize: usize) -> *mut DynHttpSocket;
     pub unsafe fn http_get_type(http: *mut DynHttpSocket) -> u8;
-    pub unsafe fn http_read_client(fut: *mut FfiFuture, http: *mut DynHttpSocket);
-    pub unsafe fn http_read_until_complete(fut: *mut FfiFuture, http: *mut DynHttpSocket);
-    pub unsafe fn http_read_until_head_complete(fut: *mut FfiFuture, http: *mut DynHttpSocket);
+    pub unsafe fn http_read_client(fut: *const FfiFuture, http: *mut DynHttpSocket);
+    pub unsafe fn http_read_until_complete(fut: *const FfiFuture, http: *mut DynHttpSocket);
+    pub unsafe fn http_read_until_head_complete(fut: *const FfiFuture, http: *mut DynHttpSocket);
     pub unsafe fn http_set_header(http: *mut DynHttpSocket, pair: FfiHeaderPair);
     pub unsafe fn http_add_header(http: *mut DynHttpSocket, pair: FfiHeaderPair);
     pub unsafe fn http_del_header(http: *mut DynHttpSocket, name: FfiSlice);
-    pub unsafe fn http_write(fut: *mut FfiFuture, http: *mut DynHttpSocket, buf: FfiSlice);
-    pub unsafe fn http_close(fut: *mut FfiFuture, http: *mut DynHttpSocket, buf: FfiSlice);
-    pub unsafe fn http_flush(fut: *mut FfiFuture, http: *mut DynHttpSocket);
+    pub unsafe fn http_write(fut: *const FfiFuture, http: *mut DynHttpSocket, buf: FfiSlice);
+    pub unsafe fn http_close(fut: *const FfiFuture, http: *mut DynHttpSocket, buf: FfiSlice);
+    pub unsafe fn http_flush(fut: *const FfiFuture, http: *mut DynHttpSocket);
     pub unsafe fn http_free(http: *mut DynHttpSocket);
 
     pub unsafe fn http_get_fficlient(http: *mut DynHttpSocket) -> *mut FfiClient;
@@ -415,10 +415,10 @@ unsafe extern "C" {
     pub unsafe fn http_client_get_header(http: *mut DynHttpSocket, name: FfiSlice, index: usize) -> FfiSlice;
     pub unsafe fn http_client_get_body(http: *mut DynHttpSocket) -> FfiSlice;
 
-    pub unsafe fn http1_direct_write(fut: *mut FfiFuture, http: *mut DynHttpSocket, buf: FfiSlice);
-    pub unsafe fn http1_websocket(fut: *mut FfiFuture<DynWebSocket>, http: *mut DynHttpSocket);
-    pub unsafe fn http1_h2c(fut: *mut FfiFuture<DynH2Sess>, http: *mut DynHttpSocket);
-    pub unsafe fn http1_h2_prior_knowledge(fut: *mut FfiFuture<DynH2Sess>, http: *mut DynHttpSocket);
+    pub unsafe fn http1_direct_write(fut: *const FfiFuture, http: *mut DynHttpSocket, buf: FfiSlice);
+    pub unsafe fn http1_websocket(fut: *const FfiFuture<DynWebSocket>, http: *mut DynHttpSocket);
+    pub unsafe fn http1_h2c(fut: *const FfiFuture<DynH2Sess>, http: *mut DynHttpSocket);
+    pub unsafe fn http1_h2_prior_knowledge(fut: *const FfiFuture<DynH2Sess>, http: *mut DynHttpSocket);
 
     pub unsafe fn tls_config_single_cert_pem(certs: FfiSlice, key: FfiSlice, alpns: *mut c_char) -> *const c_void; // ServerConfig
     pub unsafe fn tls_config_sni_builder() -> *const c_void; // TlsCertSelector
@@ -426,7 +426,7 @@ unsafe extern "C" {
     pub unsafe fn tls_config_sni_add_pem(sni_build: *const c_void, domain: *mut c_char, certs: FfiSlice, key: FfiSlice) -> bool;
     pub unsafe fn tls_config_sni_builder_build(sni_build: *const c_void, alpns: *mut c_char) -> *const c_void; // ServerConfig
     pub unsafe fn tls_config_free(conf: *const c_void);
-    pub unsafe fn tcp_upgrade_tls(fut: *mut FfiFuture<DynStream>, stream: *mut DynStream, conf: *const c_void);
+    pub unsafe fn tcp_upgrade_tls(fut: *const FfiFuture<DynStream>, stream: *mut DynStream, conf: *const c_void);
 
     pub unsafe fn create_duplex(bufsize: usize) -> FfiDuoStream;
     pub unsafe fn tcp_from_fd(fd: i32) -> *mut DynStream;
@@ -434,39 +434,39 @@ unsafe extern "C" {
     pub unsafe fn tcp_to_fd(fd: *mut DynStream) -> *mut i32;
     pub unsafe fn unix_to_fd(fd: *mut DynStream) -> *mut i32;
 
-    pub unsafe fn tcp_peek(fut: *mut FfiFuture<usize>, ffi: *mut DynStream, buf: *mut FfiSlice);
+    pub unsafe fn tcp_peek(fut: *const FfiFuture<usize>, ffi: *mut DynStream, buf: *mut FfiSlice);
     pub unsafe fn tls_get_alpn(stream: *mut DynStream) -> FfiSlice;
     pub unsafe fn stream_get_type(stream: *mut DynStream) -> u8;
-    pub unsafe fn stream_read(fut: *mut FfiFuture<usize>, stream: *mut DynStream, buf: *mut FfiSlice);
-    pub unsafe fn stream_read_exact(fut: *mut FfiFuture<usize>, stream: *mut DynStream, buf: *mut FfiSlice);
-    pub unsafe fn stream_write(fut: *mut FfiFuture<usize>, stream: *mut DynStream, buf: *mut FfiSlice);
-    pub unsafe fn stream_write_all(fut: *mut FfiFuture<usize>, stream: *mut DynStream, buf: *mut FfiSlice);
-    pub unsafe fn stream_flush(fut: *mut FfiFuture, stream: *mut DynStream);
-    pub unsafe fn stream_shutdown(fut: *mut FfiFuture, stream: *mut DynStream);
+    pub unsafe fn stream_read(fut: *const FfiFuture<usize>, stream: *mut DynStream, buf: *mut FfiSlice);
+    pub unsafe fn stream_read_exact(fut: *const FfiFuture<usize>, stream: *mut DynStream, buf: *mut FfiSlice);
+    pub unsafe fn stream_write(fut: *const FfiFuture<usize>, stream: *mut DynStream, buf: *mut FfiSlice);
+    pub unsafe fn stream_write_all(fut: *const FfiFuture<usize>, stream: *mut DynStream, buf: *mut FfiSlice);
+    pub unsafe fn stream_flush(fut: *const FfiFuture, stream: *mut DynStream);
+    pub unsafe fn stream_shutdown(fut: *const FfiFuture, stream: *mut DynStream);
     pub unsafe fn stream_free(stream: *mut DynStream);
 
-    pub unsafe fn websocket_read_frame(fut: *mut FfiFuture<FfiWsFrame>, ws: *mut DynWebSocket);
+    pub unsafe fn websocket_read_frame(fut: *const FfiFuture<FfiWsFrame>, ws: *mut DynWebSocket);
     pub unsafe fn websocket_free_frame(frame: *mut FfiWsFrame);
-    pub unsafe fn websocket_flush(fut: *mut FfiFuture, ws: *mut DynWebSocket);
+    pub unsafe fn websocket_flush(fut: *const FfiFuture, ws: *mut DynWebSocket);
     pub unsafe fn websocket_free(ws: *mut DynWebSocket);
-    pub unsafe fn websocket_send_continuation(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_continuation_masked(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_continuation_frag(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_continuation_masked_frag(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_text(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_text_masked(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_text_frag(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_text_masked_frag(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_binary(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_binary_masked(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_binary_frag(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_binary_masked_frag(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_close(fut: *mut FfiFuture, ws: *mut DynWebSocket, code: u16, buf: FfiSlice);
-    pub unsafe fn websocket_send_close_masked(fut: *mut FfiFuture, ws: *mut DynWebSocket, code: u16, buf: FfiSlice);
-    pub unsafe fn websocket_send_ping(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_ping_masked(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_pong(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
-    pub unsafe fn websocket_send_pong_masked(fut: *mut FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_continuation(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_continuation_masked(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_continuation_frag(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_continuation_masked_frag(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_text(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_text_masked(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_text_frag(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_text_masked_frag(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_binary(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_binary_masked(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_binary_frag(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_binary_masked_frag(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_close(fut: *const FfiFuture, ws: *mut DynWebSocket, code: u16, buf: FfiSlice);
+    pub unsafe fn websocket_send_close_masked(fut: *const FfiFuture, ws: *mut DynWebSocket, code: u16, buf: FfiSlice);
+    pub unsafe fn websocket_send_ping(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_ping_masked(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_pong(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
+    pub unsafe fn websocket_send_pong_masked(fut: *const FfiFuture, ws: *mut DynWebSocket, buf: FfiSlice);
 
     pub unsafe fn init_rt() -> bool;
     pub unsafe fn has_init() -> bool;
