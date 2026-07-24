@@ -1,5 +1,5 @@
 use core::slice;
-use std::ffi::{c_char, c_void};
+use std::ffi::{CStr, c_char, c_void};
 use std::marker::PhantomData;
 use std::ptr;
 use std::sync::{Arc, Mutex};
@@ -13,6 +13,7 @@ use std::task::{Poll, Waker};
 #[repr(C)] pub struct DynWebSocket { _unused: [u8; 0], _phantom: PhantomData<c_void> }
 #[repr(C)] pub struct TcpListener { _unused: [u8; 0], _phantom: PhantomData<c_void> }
 #[repr(C)] pub struct SocketAddr { _unused: [u8; 0], _phantom: PhantomData<c_void> }
+#[repr(C)] pub struct TokioSettings { _unused: [u8; 0], _phantom: PhantomData<c_void> }
 
 #[repr(C)]
 #[derive(Debug)]
@@ -470,6 +471,24 @@ unsafe extern "C" {
 
     pub unsafe fn init_rt() -> bool;
     pub unsafe fn has_init() -> bool;
+    pub unsafe fn tokio_rt_builder(multi_threaded: bool) -> *mut TokioSettings;
+    pub unsafe fn tokio_rt_set_worker_threads(tok: *mut TokioSettings, worker_threads: usize);
+    pub unsafe fn tokio_rt_unset_worker_threads(tok: *mut TokioSettings);
+    pub unsafe fn tokio_rt_set_thread_name(tok: *mut TokioSettings, thread_name: *const i8);
+    pub unsafe fn tokio_rt_unset_thread_name(tok: *mut TokioSettings);
+    pub unsafe fn tokio_rt_set_event_interval(tok: *mut TokioSettings, event_interval: u32);
+    pub unsafe fn tokio_rt_unset_event_interval(tok: *mut TokioSettings);
+    pub unsafe fn tokio_rt_set_max_io_events_per_tick(tok: *mut TokioSettings, max_io_events_per_tick: usize);
+    pub unsafe fn tokio_rt_unset_max_io_events_per_tick(tok: *mut TokioSettings);
+    pub unsafe fn tokio_rt_set_global_queue_interval(tok: *mut TokioSettings, global_queue_interval: u32);
+    pub unsafe fn tokio_rt_unset_global_queue_interval(tok: *mut TokioSettings);
+    pub unsafe fn tokio_rt_set_thread_keep_alive_ns(tok: *mut TokioSettings, thread_keep_alive_ns: u64);
+    pub unsafe fn tokio_rt_unset_thread_keep_alive_ns(tok: *mut TokioSettings);
+    pub unsafe fn tokio_rt_set_thread_stack_size(tok: *mut TokioSettings, thread_stack_size: usize);
+    pub unsafe fn tokio_rt_unset_thread_stack_size(tok: *mut TokioSettings);
+    pub unsafe fn tokio_rt_set_max_blocking_threads(tok: *mut TokioSettings, max_blocking_threads: usize);
+    pub unsafe fn tokio_rt_unset_max_blocking_threads(tok: *mut TokioSettings);
+
     pub unsafe fn ffi_future_new(cb: Option<extern "C" fn(*mut c_void, *mut c_void)>, userdata: *mut c_void) -> *const FfiFuture<c_void>;
     pub unsafe fn ffi_future_state(fut: *const FfiFuture) -> u8;
     pub unsafe fn ffi_future_result(fut: *const FfiFuture<c_void>) -> *mut c_void;
@@ -615,6 +634,8 @@ impl<T> Future for FfiFuture<T, Mutex<Option<Waker>>> {
         }
     }
 }
+unsafe impl<T, U> Sync for FfiFuture<T, U> {}
+unsafe impl<T, U> Send for FfiFuture<T, U> {}
 
 extern "C" fn ffi_wake_callback(userdata: *mut c_void, _result: *mut c_void) {
     if userdata.is_null() { return; }
@@ -622,6 +643,79 @@ extern "C" fn ffi_wake_callback(userdata: *mut c_void, _result: *mut c_void) {
         let arc = Arc::from_raw(userdata as *const Mutex<Option<Waker>>);
         if let Some(waker) = arc.lock().unwrap().take() {
             waker.wake();
+        }
+    }
+}
+
+
+impl TokioSettings {
+    pub fn new(multi_threaded: bool) -> *mut Self {
+        unsafe {
+            tokio_rt_builder(multi_threaded)
+        }
+    }
+    pub fn worker_threads(&mut self, worker_threads: Option<usize>) {
+        unsafe {
+            match worker_threads {
+                Some(worker_threads) => tokio_rt_set_worker_threads(self as *mut _, worker_threads),
+                None => tokio_rt_unset_worker_threads(self as *mut _),
+            } 
+        }
+    }
+    pub fn thread_name(&mut self, thread_name: Option<&CStr>) {
+        unsafe {
+            match thread_name {
+                Some(thread_name) => tokio_rt_set_thread_name(self as *mut _, thread_name.as_ptr()),
+                None => tokio_rt_unset_thread_name(self as *mut _),
+            }
+        }
+    }
+    pub fn event_interval(&mut self, event_interval: Option<u32>) {
+        unsafe {
+            match event_interval {
+                Some(event_interval) => tokio_rt_set_event_interval(self as *mut _, event_interval),
+                None => tokio_rt_unset_event_interval(self as *mut _),
+            }
+        }
+    }
+    pub fn max_io_events_per_tick(&mut self, max_io_events_per_tick: Option<usize>) {
+        unsafe {
+            match max_io_events_per_tick {
+                Some(max_io_events_per_tick) => tokio_rt_set_max_io_events_per_tick(self as *mut _, max_io_events_per_tick),
+                None => tokio_rt_unset_max_io_events_per_tick(self as *mut _),
+            }
+        }
+    }
+    pub fn global_queue_interval(&mut self, global_queue_interval: Option<u32>) {
+        unsafe {
+            match global_queue_interval {
+                Some(global_queue_interval) => tokio_rt_set_global_queue_interval(self as *mut _, global_queue_interval),
+                None => tokio_rt_unset_global_queue_interval(self as *mut _),
+            }
+        }
+    }
+    pub fn thread_keep_alive_ns(&mut self, thread_keep_alive_ns: Option<u64>) {
+        unsafe {
+            match thread_keep_alive_ns {
+                Some(thread_keep_alive_ns) => tokio_rt_set_thread_keep_alive_ns(self as *mut _, thread_keep_alive_ns),
+                None => tokio_rt_unset_thread_keep_alive_ns(self as *mut _),
+            }
+        }
+    }
+    pub fn thread_stack_size(&mut self, thread_stack_size: Option<usize>) {
+        unsafe {
+            match thread_stack_size {
+                Some(thread_stack_size) => tokio_rt_set_thread_stack_size(self as *mut _, thread_stack_size),
+                None => tokio_rt_unset_thread_stack_size(self as *mut _),
+            }
+        }
+    }
+    pub fn max_blocking_threads(&mut self, max_blocking_threads: Option<usize>) {
+        unsafe {
+            match max_blocking_threads {
+                Some(max_blocking_threads) => tokio_rt_set_max_blocking_threads(self as *mut _, max_blocking_threads),
+                None => tokio_rt_unset_max_blocking_threads(self as *mut _),
+            }
         }
     }
 }
