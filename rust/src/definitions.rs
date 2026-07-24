@@ -319,9 +319,9 @@ pub enum Versions{
 
 
 unsafe extern "C" {
-    pub unsafe fn tcp_connect(fut: *const FfiFuture<DynStream>, addr: *mut i8);
-    pub unsafe fn tcp_tls_connect(fut: *const FfiFuture<DynStream>, addr: *mut i8, domain: *mut i8, alpns: *mut i8);
-    pub unsafe fn tcp_tls_connect_unverified(fut: *const FfiFuture<DynStream>, addr: *mut i8, domain: *mut i8, alpns: *mut i8);
+    pub unsafe fn tcp_connect(fut: *const FfiFuture<DynStream>, addr: *const c_char);
+    pub unsafe fn tcp_tls_connect(fut: *const FfiFuture<DynStream>, addr: *const c_char, domain: *const c_char, alpns: *const c_char);
+    pub unsafe fn tcp_tls_connect_unverified(fut: *const FfiFuture<DynStream>, addr: *const c_char, domain: *const c_char, alpns: *const c_char);
 
     pub unsafe fn http1_request_new(stream: *mut DynStream, bufsize: usize) -> *mut DynHttpRequest;
     pub unsafe fn http_req_get_type(http: *mut DynHttpRequest) -> u8;
@@ -474,7 +474,7 @@ unsafe extern "C" {
     pub unsafe fn tokio_rt_builder(multi_threaded: bool) -> *mut TokioSettings;
     pub unsafe fn tokio_rt_set_worker_threads(tok: *mut TokioSettings, worker_threads: usize);
     pub unsafe fn tokio_rt_unset_worker_threads(tok: *mut TokioSettings);
-    pub unsafe fn tokio_rt_set_thread_name(tok: *mut TokioSettings, thread_name: *const i8);
+    pub unsafe fn tokio_rt_set_thread_name(tok: *mut TokioSettings, thread_name: *const c_char);
     pub unsafe fn tokio_rt_unset_thread_name(tok: *mut TokioSettings);
     pub unsafe fn tokio_rt_set_event_interval(tok: *mut TokioSettings, event_interval: u32);
     pub unsafe fn tokio_rt_unset_event_interval(tok: *mut TokioSettings);
